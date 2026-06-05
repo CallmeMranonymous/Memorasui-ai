@@ -66,7 +66,7 @@ export function MessageBubble({ message }: Props) {
         })}
 
         {/* Text response — concatenate all text parts into one bubble */}
-        {hasText && (
+        {hasText && textParts.map((p) => p.text).join("").trim().length > 0 && !/^\s*\w+>\{/.test(textParts.map((p) => p.text).join("")) && (
           <div
             className={clsx(
               "px-4 py-3 rounded-2xl text-sm leading-relaxed",
