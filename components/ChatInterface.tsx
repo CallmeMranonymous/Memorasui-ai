@@ -121,7 +121,7 @@ export function ChatInterface() {
           <Brain className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="font-semibold text-white">MemoraSui AI</h1>
+          <a href="/" className="font-semibold text-white hover:text-blue-400 transition-colors">MemoraSui AI</a>
           <p className="text-xs text-gray-400">Memory on Walrus · Actions on Sui via Tatum</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
