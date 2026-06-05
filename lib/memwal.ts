@@ -19,7 +19,10 @@ export async function saveMemory(text: string) {
   try {
     const memwal = getClient();
     const job = await memwal.remember(text);
-    await memwal.waitForRememberJob(job.job_id);
+    // Don't await job completion — fire and forget to avoid Vercel timeout
+    memwal.waitForRememberJob(job.job_id).catch((e) =>
+      console.error("[MemWal] job failed:", e)
+    );
     return job;
   } catch (err) {
     console.error("[MemWal] saveMemory failed:", err);
