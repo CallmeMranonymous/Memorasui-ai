@@ -80,12 +80,18 @@ export function ChatInterface() {
             const name = event.toolName as string;
             if (name && !toolCallsFound.includes(name)) {
               toolCallsFound.push(name);
-              // Save to localStorage for dashboard
-              if (name === "save_memory" && event.input?.content) {
-                const stored = localStorage.getItem("memorasui_memories");
-                const existing = stored ? JSON.parse(stored) : [];
-                existing.unshift({ id: Date.now().toString(), content: event.input.content, timestamp: new Date().toISOString() });
-                localStorage.setItem("memorasui_memories", JSON.stringify(existing.slice(0, 50)));
+              // When save_memory fires, store the user's message in localStorage for dashboard
+              if (name === "save_memory") {
+                try {
+                  const stored = localStorage.getItem("memorasui_memories");
+                  const existing = stored ? JSON.parse(stored) : [];
+                  existing.unshift({
+                    id: Date.now().toString(),
+                    content: text, // user's message text
+                    timestamp: new Date().toISOString()
+                  });
+                  localStorage.setItem("memorasui_memories", JSON.stringify(existing.slice(0, 50)));
+                } catch {}
               }
             }
           }
