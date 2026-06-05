@@ -12,7 +12,7 @@ interface Message {
 }
 
 const STARTER_PROMPTS = [
-  "My name is Alex and I'm building on Sui",
+  "My name is Mega and I'm building DeFi on Sui",
   "Check my Sui balance at 0x721917469b2b6f910cf0bc1863c3fb1c98e9d81a2b67ff84871166e1fcf90827",
   "What do you remember about me?",
 ];
@@ -33,14 +33,16 @@ export function ChatInterface() {
     setInput("");
 
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text };
-    setMessages((prev) => [...prev, userMsg]);
+    const assistantId = (Date.now() + 1).toString();
+
+    setMessages((prev) => [
+      ...prev,
+      userMsg,
+      { id: assistantId, role: "assistant", content: "", toolCalls: [] },
+    ]);
     setIsLoading(true);
 
-    const assistantId = (Date.now() + 1).toString();
-    setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "", toolCalls: [] }]);
-
     try {
-      // Build messages in UIMessage format
       const allMessages = [...messages, userMsg].map((m) => ({
         id: m.id,
         role: m.role,
@@ -55,52 +57,45 @@ export function ChatInterface() {
 
       if (!res.ok || !res.body) throw new Error("API error");
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+      // Read full response text then parse all SSE events at once
+      const fullText = await res.text();
+      const lines = fullText.split("\n");
+
       let assistantText = "";
       const toolCallsFound: string[] = [];
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const raw = line.slice(6).trim();
+        if (!raw || raw === "[DONE]") continue;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
+        try {
+          const event = JSON.parse(raw);
 
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const raw = line.slice(6).trim();
-          if (raw === "[DONE]") continue;
+          if (event.type === "text-delta") {
+            assistantText += event.delta;
+          }
 
-          try {
-            const event = JSON.parse(raw);
-
-            if (event.type === "text-delta") {
-              assistantText += event.delta;
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId ? { ...m, content: assistantText } : m
-                )
-              );
+          if (event.type === "tool-input-available") {
+            const name = event.toolName as string;
+            if (name && !toolCallsFound.includes(name)) {
+              toolCallsFound.push(name);
             }
-
-            if (event.type === "tool-input-available") {
-              const name = event.toolName as string;
-              if (!toolCallsFound.includes(name)) {
-                toolCallsFound.push(name);
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantId ? { ...m, toolCalls: [...toolCallsFound] } : m
-                  )
-                );
-              }
-            }
-          } catch {}
+          }
+        } catch {
+          // ignore malformed lines
         }
       }
-    } catch (err) {
+
+      // Update once with final state
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? { ...m, content: assistantText, toolCalls: toolCallsFound }
+            : m
+        )
+      );
+    } catch {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
@@ -121,7 +116,9 @@ export function ChatInterface() {
           <Brain className="w-5 h-5 text-white" />
         </div>
         <div>
-          <a href="/" className="font-semibold text-white hover:text-blue-400 transition-colors">MemoraSui AI</a>
+          <a href="/" className="font-semibold text-white hover:text-blue-400 transition-colors">
+            MemoraSui AI
+          </a>
           <p className="text-xs text-gray-400">Memory on Walrus · Actions on Sui via Tatum</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
@@ -139,7 +136,7 @@ export function ChatInterface() {
             </div>
             <h2 className="text-xl font-semibold">Your AI with permanent memory</h2>
             <p className="text-gray-400 max-w-sm text-sm">
-              Every conversation is encrypted and stored on Walrus. I remember you forever — and can act on Sui.
+              Every conversation is encrypted and stored on Walrus. I remember you — and can act on Sui.
             </p>
             <div className="grid grid-cols-1 gap-2 mt-2 w-full max-w-sm">
               {STARTER_PROMPTS.map((prompt) => (
@@ -157,16 +154,23 @@ export function ChatInterface() {
 
         {messages.map((m) => {
           const isUser = m.role === "user";
+          const isThinking = !isUser && isLoading && !m.content && (!m.toolCalls || m.toolCalls.length === 0);
+
           return (
             <div key={m.id} className={`flex gap-3 max-w-3xl mx-auto w-full ${isUser ? "flex-row-reverse" : ""}`}>
               <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${isUser ? "bg-gray-700" : "bg-gradient-to-br from-blue-500 to-purple-600"}`}>
-                {isUser ? <span className="text-xs text-gray-300">U</span> : <Brain className="w-4 h-4 text-white" />}
+                {isUser
+                  ? <span className="text-xs text-gray-300">U</span>
+                  : <Brain className="w-4 h-4 text-white" />}
               </div>
+
               <div className={`flex flex-col gap-2 max-w-[80%] ${isUser ? "items-end" : ""}`}>
                 {/* Tool indicators */}
                 {!isUser && m.toolCalls && m.toolCalls.map((toolName, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border border-dashed border-gray-600 text-gray-400 bg-gray-900">
-                    {toolName.includes("memory") ? <Database className="w-3 h-3 text-purple-400" /> : <Zap className="w-3 h-3 text-blue-400" />}
+                    {toolName.includes("memory")
+                      ? <Database className="w-3 h-3 text-purple-400" />
+                      : <Zap className="w-3 h-3 text-blue-400" />}
                     <span>
                       {toolName === "save_memory" && "Saving to Walrus... ✓"}
                       {toolName === "recall_memory" && "Recalling from Walrus... ✓"}
@@ -176,6 +180,13 @@ export function ChatInterface() {
                     </span>
                   </div>
                 ))}
+
+                {/* Thinking indicator */}
+                {isThinking && (
+                  <div className="px-4 py-3 rounded-2xl bg-gray-800 text-gray-400 text-sm animate-pulse">
+                    Thinking...
+                  </div>
+                )}
 
                 {/* Text bubble */}
                 {m.content && (
@@ -187,19 +198,12 @@ export function ChatInterface() {
                           strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
                           ul: ({ children }) => <ul className="list-disc pl-4 mb-2 space-y-1">{children}</ul>,
                           li: ({ children }) => <li>{children}</li>,
-                          code: ({ children }) => <code className="bg-gray-700 px-1 rounded text-xs">{children}</code>,
+                          code: ({ children }) => <code className="bg-gray-700 px-1 rounded text-xs font-mono">{children}</code>,
                         }}
                       >
                         {m.content}
                       </ReactMarkdown>
                     )}
-                  </div>
-                )}
-
-                {/* Loading dots */}
-                {!isUser && isLoading && m.content === "" && (
-                  <div className="px-4 py-3 rounded-2xl bg-gray-800 text-gray-400 text-sm">
-                    <span className="animate-pulse">Thinking...</span>
                   </div>
                 )}
               </div>
