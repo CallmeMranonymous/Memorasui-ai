@@ -134,7 +134,10 @@ export function ChatInterface() {
           </a>
           <p className="text-xs text-gray-400">Memory on Walrus · Actions on Sui via Tatum</p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-3">
+          <a href="/dashboard" className="text-xs text-gray-400 hover:text-white transition-colors border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-lg">
+            My Memories
+          </a>
           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
           <span className="text-xs text-gray-400">Live</span>
         </div>
