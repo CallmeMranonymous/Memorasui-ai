@@ -1,34 +1,116 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
 import { useState, useRef, useEffect } from "react";
-import { Send, Brain, Loader2 } from "lucide-react";
-import { MessageBubble } from "./MessageBubble";
+import { Send, Brain, Loader2, Database, Zap } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
-const transport = new DefaultChatTransport({ api: "/api/chat" });
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  toolCalls?: string[];
+}
 
 const STARTER_PROMPTS = [
   "My name is Alex and I'm building on Sui",
-  "Check my Sui balance at 0x1234...",
+  "Check my Sui balance at 0x721917469b2b6f910cf0bc1863c3fb1c98e9d81a2b67ff84871166e1fcf90827",
   "What do you remember about me?",
 ];
 
 export function ChatInterface() {
-  const { messages, sendMessage, status } = useChat({ transport });
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const isLoading = status === "streaming" || status === "submitted";
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  function submit() {
+  async function submit() {
     const text = input.trim();
     if (!text || isLoading) return;
     setInput("");
-    sendMessage({ text });
+
+    const userMsg: Message = { id: Date.now().toString(), role: "user", content: text };
+    setMessages((prev) => [...prev, userMsg]);
+    setIsLoading(true);
+
+    const assistantId = (Date.now() + 1).toString();
+    setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "", toolCalls: [] }]);
+
+    try {
+      // Build messages in UIMessage format
+      const allMessages = [...messages, userMsg].map((m) => ({
+        id: m.id,
+        role: m.role,
+        parts: [{ type: "text", text: m.content }],
+      }));
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: allMessages }),
+      });
+
+      if (!res.ok || !res.body) throw new Error("API error");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let assistantText = "";
+      const toolCallsFound: string[] = [];
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const raw = line.slice(6).trim();
+          if (raw === "[DONE]") continue;
+
+          try {
+            const event = JSON.parse(raw);
+
+            if (event.type === "text-delta") {
+              assistantText += event.delta;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId ? { ...m, content: assistantText } : m
+                )
+              );
+            }
+
+            if (event.type === "tool-input-available") {
+              const name = event.toolName as string;
+              if (!toolCallsFound.includes(name)) {
+                toolCallsFound.push(name);
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId ? { ...m, toolCalls: [...toolCallsFound] } : m
+                  )
+                );
+              }
+            }
+          } catch {}
+        }
+      }
+    } catch (err) {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? { ...m, content: "Sorry, something went wrong. Please try again." }
+            : m
+        )
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -72,15 +154,58 @@ export function ChatInterface() {
             </div>
           </div>
         )}
-        {messages.map((m, i) => (
-          <MessageBubble key={m.id ?? i} message={m} />
-        ))}
-        {isLoading && (
-          <div className="flex gap-2 items-center text-gray-400 text-sm pl-2">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Thinking...</span>
-          </div>
-        )}
+
+        {messages.map((m) => {
+          const isUser = m.role === "user";
+          return (
+            <div key={m.id} className={`flex gap-3 max-w-3xl mx-auto w-full ${isUser ? "flex-row-reverse" : ""}`}>
+              <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${isUser ? "bg-gray-700" : "bg-gradient-to-br from-blue-500 to-purple-600"}`}>
+                {isUser ? <span className="text-xs text-gray-300">U</span> : <Brain className="w-4 h-4 text-white" />}
+              </div>
+              <div className={`flex flex-col gap-2 max-w-[80%] ${isUser ? "items-end" : ""}`}>
+                {/* Tool indicators */}
+                {!isUser && m.toolCalls && m.toolCalls.map((toolName, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border border-dashed border-gray-600 text-gray-400 bg-gray-900">
+                    {toolName.includes("memory") ? <Database className="w-3 h-3 text-purple-400" /> : <Zap className="w-3 h-3 text-blue-400" />}
+                    <span>
+                      {toolName === "save_memory" && "Saving to Walrus... ✓"}
+                      {toolName === "recall_memory" && "Recalling from Walrus... ✓"}
+                      {toolName === "get_sui_balance" && "Checking balance via Tatum... ✓"}
+                      {toolName === "get_sui_transactions" && "Fetching transactions via Tatum... ✓"}
+                      {toolName === "get_sui_object" && "Inspecting Sui object... ✓"}
+                    </span>
+                  </div>
+                ))}
+
+                {/* Text bubble */}
+                {m.content && (
+                  <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${isUser ? "bg-blue-600 text-white rounded-tr-sm" : "bg-gray-800 text-gray-100 rounded-tl-sm"}`}>
+                    {isUser ? m.content : (
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                          strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                          ul: ({ children }) => <ul className="list-disc pl-4 mb-2 space-y-1">{children}</ul>,
+                          li: ({ children }) => <li>{children}</li>,
+                          code: ({ children }) => <code className="bg-gray-700 px-1 rounded text-xs">{children}</code>,
+                        }}
+                      >
+                        {m.content}
+                      </ReactMarkdown>
+                    )}
+                  </div>
+                )}
+
+                {/* Loading dots */}
+                {!isUser && isLoading && m.content === "" && (
+                  <div className="px-4 py-3 rounded-2xl bg-gray-800 text-gray-400 text-sm">
+                    <span className="animate-pulse">Thinking...</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
         <div ref={bottomRef} />
       </div>
 
@@ -105,7 +230,7 @@ export function ChatInterface() {
             disabled={isLoading || !input.trim()}
             className="p-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            <Send className="w-4 h-4" />
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </button>
         </div>
         <p className="text-center text-xs text-gray-600 mt-2">
