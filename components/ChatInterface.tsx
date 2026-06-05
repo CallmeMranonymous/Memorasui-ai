@@ -35,6 +35,18 @@ export function ChatInterface() {
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text };
     const assistantId = (Date.now() + 1).toString();
 
+    // Save every user message to localStorage for dashboard
+    try {
+      const stored = localStorage.getItem("memorasui_memories");
+      const existing = stored ? JSON.parse(stored) : [];
+      existing.unshift({
+        id: Date.now().toString(),
+        content: text,
+        timestamp: new Date().toISOString()
+      });
+      localStorage.setItem("memorasui_memories", JSON.stringify(existing.slice(0, 100)));
+    } catch {}
+
     setMessages((prev) => [
       ...prev,
       userMsg,
