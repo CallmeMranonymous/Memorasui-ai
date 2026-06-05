@@ -1,4 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MemoraSui AI
+
+**The first portable, user-owned AI agent whose entire long-term memory lives permanently on Walrus — searchable, encrypted, and owned via Sui wallet.**
+
+Built for the [Tatum × Walrus Hackathon](https://tatum.io/tatum-x-walrus-hackathon).
+
+---
+
+## Architecture
+
+```
+User (Browser)
+     │
+     ▼
+Next.js 15 Chat UI  (Vercel AI SDK streaming)
+     │
+     ▼
+/api/chat  ──► Gemini 2.0 Flash (AI model)
+     │               │
+     │         ┌─────┴──────┐
+     │         ▼            ▼
+     │   recall_memory   get_sui_balance
+     │   save_memory     get_sui_transactions
+     │         │            │
+     │         ▼            ▼
+     │   MemWal SDK    Tatum Sui RPC
+     │   (Walrus)      (sui-mainnet.tatum.io)
+```
+
+---
+
+## Why This Wins
+
+| Criterion | How We Score |
+|---|---|
+| Walrus + Tatum Integration (30%) | Walrus IS the product. Tatum handles all RPC. |
+| Technical Quality (30%) | Production Next.js 15, streaming AI, encrypted on-chain storage |
+| Creativity (20%) | First-ever AI with user-owned permanent on-chain memory |
+| Presentation (20%) | Clear "forget → remember → act" demo flow |
+
+---
+
+## Quick Start
+
+```bash
+npm install
+cp .env.local .env.local.bak   # fill in your keys
+npm run dev
+```
 
 ## Getting Started
 
