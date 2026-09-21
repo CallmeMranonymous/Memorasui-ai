@@ -37,39 +37,39 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-900 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+      <div className="border-b border-gray-800 bg-gray-900 px-4 sm:px-6 py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
               <Brain className="w-5 h-5 text-white" />
             </div>
-            <div>
-              <h1 className="font-semibold">Memory Dashboard</h1>
-              <p className="text-xs text-gray-400">Your on-chain memories — stored on Walrus</p>
+            <div className="min-w-0">
+              <h1 className="font-semibold truncate">Memory Dashboard</h1>
+              <p className="text-xs text-gray-400 truncate">Your on-chain memories — stored on Walrus</p>
             </div>
           </div>
-          <Link href="/chat" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition-colors">
+          <Link href="/chat" className="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition-colors flex-shrink-0">
             Open Chat
           </Link>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-3 sm:p-4">
             <Database className="w-4 h-4 text-gray-400 mb-2" />
-            <p className="text-2xl font-bold">{memories.length}</p>
+            <p className="text-xl sm:text-2xl font-bold">{memories.length}</p>
             <p className="text-xs text-gray-400">Total Memories</p>
           </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-3 sm:p-4">
             <Brain className="w-4 h-4 text-purple-400 mb-2" />
-            <p className="text-2xl font-bold">Walrus</p>
+            <p className="text-lg sm:text-2xl font-bold truncate">Walrus</p>
             <p className="text-xs text-gray-400">Storage Layer</p>
           </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-3 sm:p-4">
             <RefreshCw className="w-4 h-4 text-blue-400 mb-2" />
-            <p className="text-2xl font-bold">Sui Mainnet</p>
+            <p className="text-sm sm:text-xl font-bold">Sui Mainnet</p>
             <p className="text-xs text-gray-400">Network</p>
           </div>
         </div>

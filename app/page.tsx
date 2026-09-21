@@ -3,19 +3,19 @@ import { Brain, Zap, Database, Shield } from "lucide-react";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center px-6">
+    <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center px-4 sm:px-6 py-10">
       <div className="max-w-2xl w-full text-center space-y-8">
         <div className="flex justify-center">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/25">
-            <Brain className="w-10 h-10 text-white" />
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/25">
+            <Brain className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
           </div>
         </div>
 
         <div className="space-y-3">
-          <h1 className="text-5xl font-bold tracking-tight">
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight">
             Memoria<span className="text-blue-400">Sui</span>
           </h1>
-          <p className="text-xl text-gray-400">
+          <p className="text-base sm:text-xl text-gray-400">
             The first AI agent whose memory you actually own.
           </p>
           <p className="text-sm text-gray-500">
@@ -25,7 +25,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
           {[
             {
               icon: Database,
@@ -54,7 +54,7 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="flex gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/chat"
             className="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold transition-colors"

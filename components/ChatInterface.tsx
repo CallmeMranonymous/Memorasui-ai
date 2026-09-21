@@ -136,19 +136,20 @@ export function ChatInterface() {
   return (
     <div className="flex flex-col h-screen bg-gray-950 text-white">
       {/* Header */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-800 bg-gray-900">
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+      <div className="flex items-center gap-3 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-800 bg-gray-900">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
           <Brain className="w-5 h-5 text-white" />
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <a href="/" className="font-semibold text-white hover:text-blue-400 transition-colors">
             MemoraSui AI
           </a>
-          <p className="text-xs text-gray-400">Memory on Walrus · Actions on Sui via Tatum</p>
+          <p className="text-xs text-gray-400 hidden sm:block">Memory on Walrus · Actions on Sui via Tatum</p>
         </div>
-        <div className="ml-auto flex items-center gap-3">
-          <a href="/dashboard" className="text-xs text-gray-400 hover:text-white transition-colors border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-lg">
-            My Memories
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <a href="/dashboard" className="text-xs text-gray-400 hover:text-white transition-colors border border-gray-700 hover:border-gray-500 px-2 sm:px-3 py-1.5 rounded-lg whitespace-nowrap">
+            <span className="hidden sm:inline">My Memories</span>
+            <span className="sm:hidden">Memories</span>
           </a>
           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
           <span className="text-xs text-gray-400">Live</span>
@@ -171,7 +172,7 @@ export function ChatInterface() {
                 <button
                   key={prompt}
                   onClick={() => setInput(prompt)}
-                  className="text-left px-4 py-2 rounded-lg border border-gray-700 hover:border-blue-500 text-sm text-gray-300 hover:text-white transition-colors"
+                  className="text-left px-4 py-2 rounded-lg border border-gray-700 hover:border-blue-500 text-sm text-gray-300 hover:text-white transition-colors overflow-hidden"
                 >
                   {prompt}
                 </button>
@@ -242,7 +243,7 @@ export function ChatInterface() {
       </div>
 
       {/* Input */}
-      <div className="px-4 pb-6 pt-2 border-t border-gray-800 bg-gray-900">
+      <div className="px-3 sm:px-4 pb-4 sm:pb-6 pt-2 border-t border-gray-800 bg-gray-900">
         <div className="flex gap-3 items-end max-w-3xl mx-auto">
           <textarea
             value={input}
